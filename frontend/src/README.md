@@ -1,5 +1,4 @@
 # Gidy Audit Log Dashboard
-
 A full-stack security audit log dashboard built with React, Node.js, Express, and MongoDB.
 
 ## Live Demo
@@ -19,8 +18,15 @@ A full-stack security audit log dashboard built with React, Node.js, Express, an
 - Backend: Node.js + Express
 - Database: MongoDB + Mongoose
 
-## Setup Instructions
+## API Endpoints
+- `POST /api/logs/upload` — Bulk insert logs. Body: `{ "logs": [...] }`
+- `GET /api/logs` — Fetch logs with query params:
+  - `page`, `limit` — pagination
+  - `sort`, `order` — sorting (e.g. `sort=timestamp&order=desc`)
+  - `search` — text search across actor, action, resource, ipAddress
+  - `severity`, `status`, `action`, `region` — filters
 
+## Setup Instructions
 ### Backend
 ```bash
 cd backend
@@ -28,7 +34,6 @@ npm install
 # Add .env file with MONGO_URI and PORT
 node server.js
 ```
-
 ### Frontend
 ```bash
 cd frontend
@@ -38,14 +43,19 @@ npm run dev
 
 ## Technical Decisions
 
-### Why insertMany?
-Bulk insert 10,000 records in one DB call — faster than looping individual inserts.
+### Why insertMany with ordered: false?
+Bulk insert 10,000 records in a single DB call instead of looping individual inserts, which is significantly faster. Using `{ ordered: false }` ensures that if one record fails validation, the rest still get inserted instead of the whole batch failing.
 
-### Why server-side pagination?
-Loading 10,000 records at once crashes browser — server sends only 10 per page.
+### Why server-side pagination, filtering, and sorting?
+Loading all 10,000 records to the browser and filtering/sorting client-side would be slow and memory-heavy. Instead, the server only returns the requested page (10 records at a time), with MongoDB doing the heavy lifting via query, sort, skip, and limit.
+
+### Why indexes on filterable/sortable fields?
+Fields like `severity`, `status`, `region`, `action`, and `timestamp` are indexed in the schema since these are the fields most frequently filtered and sorted on. Without indexes, MongoDB would need to scan all 10,000+ documents for every query, which doesn't scale.
 
 ### Why MongoDB?
-Schema-flexible for audit logs — different log types can have different fields.
+Document-based storage made it straightforward to model audit log entries as JSON documents matching the given data shape, and Mongoose's schema validation (enums for severity/status) still enforces data integrity similar to SQL constraints.
 
 ### Why React + Vite?
-Fast development build, hot reload, optimized production bundle.
+Fast development build, hot module reload, and an optimized production bundle for a lightweight SPA dashboard.
+
+## Folder Structure
