@@ -23,7 +23,7 @@ const handleFileUpload = async (e) => {
   try {
     const text = await file.text();
     const json = JSON.parse(text);
-    const res = await axios.post("http://localhost:5000/api/logs/upload", json);
+    const res = await axios.post("https://gidy-audit-dashboard-9rj2.onrender.com/api/logs/upload", json);
     setUploadMsg(`✅ ${res.data.message}`);
     fetchLogs();
   } catch (err) {
@@ -35,7 +35,7 @@ const handleFileUpload = async (e) => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/logs", {
+      const res = await axios.get("https://gidy-audit-dashboard-9rj2.onrender.com/api/logs", {
         params: { page, limit, search, severity, status, sort, order },
       });
       setLogs(res.data.logs);
